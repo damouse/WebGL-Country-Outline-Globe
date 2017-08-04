@@ -76,7 +76,6 @@ DAT.Globe = function(container, colorFn) {
   }
 
   function init() {
-
     container.style.color = '#fff';
     container.style.font = '13px/20px Arial, sans-serif';
 
@@ -84,71 +83,40 @@ DAT.Globe = function(container, colorFn) {
     w = container.offsetWidth || window.innerWidth;
     h = container.offsetHeight || window.innerHeight;
 
-    camera = new THREE.Camera(
-      30, w / h, 1, 10000);
+    camera = new THREE.Camera(30, w / h, 1, 10000);
     camera.position.z = distance;
 
     vector = new THREE.Vector3();
-
     scene = new THREE.Scene();
-    sceneAtmosphere = new THREE.Scene();
-
     var geometry = new THREE.Sphere(200, 40, 30);
 
     shader = Shaders['earth'];
     uniforms = THREE.UniformsUtils.clone(shader.uniforms);
 
-    uniforms['texture'].texture = THREE.ImageUtils.loadTexture(imgDir + 'world' + '.jpg');
-
-    console.log("Looking for texture: ", imgDir + 'world.jpg')
+    uniforms['texture'].texture = THREE.ImageUtils.loadTexture(imgDir + 'clearground.png');
 
     material = new THREE.MeshShaderMaterial({
-
       uniforms: uniforms,
       vertexShader: shader.vertexShader,
-      fragmentShader: shader.fragmentShader
-
+      fragmentShader: shader.fragmentShader,
+      doubleSided: true,
     });
 
     mesh = new THREE.Mesh(geometry, material);
     mesh.matrixAutoUpdate = false;
     scene.addObject(mesh);
 
-    shader = Shaders['atmosphere'];
-    uniforms = THREE.UniformsUtils.clone(shader.uniforms);
-
-    material = new THREE.MeshShaderMaterial({
-
-      uniforms: uniforms,
-      vertexShader: shader.vertexShader,
-      fragmentShader: shader.fragmentShader
-
-    });
-
-    mesh = new THREE.Mesh(geometry, material);
-    mesh.scale.x = mesh.scale.y = mesh.scale.z = 1.1;
-    mesh.flipSided = true;
-    mesh.matrixAutoUpdate = false;
-    mesh.updateMatrix();
-    sceneAtmosphere.addObject(mesh);
-
     point = new THREE.Mesh(pointGeo);
-
     renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.autoClear = false;
     renderer.setClearColorHex(0x000000, 0.0);
     renderer.setSize(w, h);
 
     renderer.domElement.style.position = 'absolute';
-
     container.appendChild(renderer.domElement);
-
     container.addEventListener('mousedown', onMouseDown, false);
-
     container.addEventListener('mousewheel', onMouseWheel, false);
-
     document.addEventListener('keydown', onDocumentKeyDown, false);
-
     window.addEventListener('resize', onWindowResize, false);
 
     container.addEventListener('mouseover', function() {
