@@ -36,19 +36,16 @@ DAT.Globe = function(container, colorFn) {
   else pointModel = "models/sphere.js";
 
   var overRenderer;
-
   var imgDir = './';
-
   var curZoomSpeed = 0;
 
-  var mouse = { x: 0, y: 0 },
-    mouseOnDown = { x: 0, y: 0 };
-  var rotation = { x: 0, y: 0 },
-    target = { x: Math.PI * 3 / 2, y: Math.PI / 6.0 },
-    targetOnDown = { x: 0, y: 0 };
-
-  var distance = 100000,
-    distanceTarget = 100000;
+  var mouse = { x: 0, y: 0 };
+  var mouseOnDown = { x: 0, y: 0 };
+  var rotation = { x: 0, y: 0 };
+  var target = { x: Math.PI * 3 / 2, y: Math.PI / 6.0 };
+  var targetOnDown = { x: 0, y: 0 };
+  var distance = 100000;
+  var distanceTarget = 100000;
 
   var PI_HALF = Math.PI / 2;
 
@@ -85,29 +82,30 @@ DAT.Globe = function(container, colorFn) {
 
     camera = new THREE.Camera(30, w / h, 1, 10000);
     camera.position.z = distance;
-
     vector = new THREE.Vector3();
     scene = new THREE.Scene();
+    sceneAtmosphere = new THREE.Scene();
+
     var geometry = new THREE.Sphere(200, 40, 30);
 
     shader = Shaders['earth'];
     uniforms = THREE.UniformsUtils.clone(shader.uniforms);
-
     uniforms['texture'].texture = THREE.ImageUtils.loadTexture(imgDir + 'clearground.png');
 
     material = new THREE.MeshShaderMaterial({
       uniforms: uniforms,
       vertexShader: shader.vertexShader,
-      fragmentShader: shader.fragmentShader,
-      doubleSided: true,
+      fragmentShader: shader.fragmentShader
     });
 
     mesh = new THREE.Mesh(geometry, material);
     mesh.matrixAutoUpdate = false;
-    scene.addObject(mesh);
+
+    // Comment this back in to 
+    // scene.addObject(mesh);
 
     point = new THREE.Mesh(pointGeo);
-    renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.autoClear = false;
     renderer.setClearColorHex(0x000000, 0.0);
     renderer.setSize(w, h);
@@ -131,7 +129,6 @@ DAT.Globe = function(container, colorFn) {
   }
 
   function createPoints() {
-
     var subgeo = new THREE.Geometry();
     console.log(gridGeo);
 
@@ -155,7 +152,6 @@ DAT.Globe = function(container, colorFn) {
     }
 
     this._baseGeometry = subgeo;
-
     this.shader = Shaders['data'];
     this.uniforms = THREE.UniformsUtils.clone(this.shader.uniforms);
 
@@ -164,14 +160,14 @@ DAT.Globe = function(container, colorFn) {
     this.uniforms['extrudeMin'].value = pointExtrudeRange[0];
     this.uniforms['extrudeMax'].value = pointExtrudeRange[1];
 
-    this.material = new THREE.MeshShaderMaterial({
+    var color = new THREE.Color(0xffffff);
+    color.setRGB(Math.random(), 0, 0);
 
+    this.material = new THREE.MeshShaderMaterial({
       uniforms: this.uniforms,
       vertexShader: this.shader.vertexShader,
       fragmentShader: this.shader.fragmentShader,
-      color: 0xffffff,
-      vertexColors: THREE.FaceColors
-
+      vertexColors: color
     });
 
     this.points = new THREE.Mesh(this._baseGeometry, this.material);
@@ -180,35 +176,27 @@ DAT.Globe = function(container, colorFn) {
   }
 
   function addPoint(x, y, z, u, v, subgeo) {
-
     point.position.x = x;
     point.position.y = y;
     point.position.z = z;
 
     point.scale.set(pointScale, pointScale, 1);
-
     point.lookAt(mesh.position);
-
     point.updateMatrix();
 
-    var i, j;
-    for (i = 0; i < point.geometry.faces.length; i++) {
-
-      for (j = 0; j < point.geometry.faces[i].vertexNormals.length; j++) {
-
+    for (var i = 0; i < point.geometry.faces.length; i++) {
+      for (var j = 0; j < point.geometry.faces[i].vertexNormals.length; j++) {
         var len = point.geometry.faces[i].vertexNormals[j].length();
         point.geometry.faces[i].vertexNormals[j] = new THREE.Vector3(x / 200 * len, y / 200 * len, z / 200 * len);
-
       }
-
     }
-    for (i = 0; i < point.geometry.faceVertexUvs[0].length; i++) {
 
+    for (i = 0; i < point.geometry.faceVertexUvs[0].length; i++) {
       for (j = 0; j < point.geometry.faceVertexUvs[0][i].length; j++) {
         point.geometry.faceVertexUvs[0][i][j] = new THREE.UV(u, v);
       }
-
     }
+
     GeometryUtils.merge(subgeo, point);
   }
 
